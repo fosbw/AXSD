@@ -13,10 +13,13 @@ const transitions: Record<ExecutionStatus, readonly ExecutionStatus[]> = {
 };
 
 export function canTransition(from: ExecutionStatus, to: ExecutionStatus): boolean {
-  return transitions[from].includes(to);
+  return transitions[from]?.includes(to) ?? false;
 }
 
 export function transition(from: ExecutionStatus, to: ExecutionStatus): ExecutionStatus {
   if (!canTransition(from, to)) throw new Error(`INVALID_EXECUTION_TRANSITION:${from}->${to}`);
   return to;
 }
+
+export function isTerminal(status: ExecutionStatus): boolean { return status === 'COMPLETED' || status === 'FAILED' || status === 'CANCELLED'; }
+export function allowedTransitions(from: ExecutionStatus): readonly ExecutionStatus[] { return transitions[from] ?? []; }
