@@ -3,6 +3,7 @@ import { container } from './container.js';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerResourceRoutes } from './routes/resources.js';
 import { registerAuditRoutes } from './routes/audit.js';
+import { registerAuditWriteRoute } from './routes/audit-write.js';
 import { registerDomainRoutes } from './routes/index.js';
 import { registerOpenApiRoute } from './routes/openapi.js';
 import { registerExecutionControlRoutes } from './routes/executions-control.js';
@@ -15,6 +16,7 @@ export function buildApp(): FastifyInstance {
   registerHealthRoutes(app);
   registerResourceRoutes(app, container.resources);
   registerAuditRoutes(app, container.audit);
+  registerAuditWriteRoute(app, container.audit);
   registerOpenApiRoute(app);
   registerExecutionControlRoutes(app);
   registerDomainRoutes(app);
