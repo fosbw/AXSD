@@ -1,0 +1,2 @@
+export interface HealthState { status:'ok'|'degraded'|'down'; checks:Record<string,{status:'ok'|'fail';detail?:string}>; }
+export async function runHealthChecks(checks:Record<string,()=>Promise<void>>):Promise<HealthState>{const out:HealthState={status:'ok',checks:{}};for(const [name,fn] of Object.entries(checks)){try{await fn();out.checks[name]={status:'ok'};}catch(e){out.checks[name]={status:'fail',detail:e instanceof Error?e.message:'check failed'};out.status='degraded';}}return out;}
