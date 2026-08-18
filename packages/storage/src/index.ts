@@ -8,6 +8,7 @@ export { PostgresAuditRepository } from './audit-repository.js';
 export { PostgresUserRepository } from './user-repository.js';
 export { PostgresApiKeyRepository } from './api-key-repository.js';
 export { PostgresExecutionRepository } from './execution-repository.js';
+export { InMemoryExecutionRepository } from './in-memory-execution-repository.js';
 export { PostgresProjectRepository } from './project-repository.js';
 export { PostgresTeamRepository } from './team-repository.js';
 export { PostgresApprovalRepository } from './approval-repository.js';
