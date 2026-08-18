@@ -1,0 +1,3 @@
+# Plugin trust boundary
+
+Plugins are untrusted by default. Registration must not grant execution privileges. A production plugin requires explicit trust, a declared capability set, version metadata, integrity information, and an execution boundary appropriate to its risk. Plugin output is data, never policy authority. Secrets are provided by the host through references rather than plugin-owned plaintext configuration.
