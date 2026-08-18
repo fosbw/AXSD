@@ -1,0 +1,4 @@
+import type { Pool } from 'pg';
+export interface TeamRecord { id:string; name:string; ownerId:string; }
+export interface TeamMember { teamId:string; userId:string; role:'OWNER'|'ADMIN'|'MEMBER'|'VIEWER'; }
+export class PostgresTeamRepository { constructor(private readonly pool:Pool){} async create(t:TeamRecord){await this.pool.query(`INSERT INTO teams(id,name,owner_id) VALUES($1,$2,$3)`,[t.id,t.name,t.ownerId]);} async addMember(m:TeamMember){await this.pool.query(`INSERT INTO team_members(team_id,user_id,role) VALUES($1,$2,$3) ON CONFLICT(team_id,user_id) DO UPDATE SET role=excluded.role`,[m.teamId,m.userId,m.role]);} async memberRole(teamId:string,userId:string){const {rows}=await this.pool.query(`SELECT role FROM team_members WHERE team_id=$1 AND user_id=$2`,[teamId,userId]);return rows[0]?.role??null;} }
