@@ -1,5 +1,4 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
+import { describe, expect, it } from 'vitest';
 import { LoopDetector } from './loop-detector.js';
 
-test('signals repeated calls at threshold', () => { const detector = new LoopDetector(2); assert.equal(detector.observe('identical_tool_call', 'x'), null); assert.equal(detector.observe('identical_tool_call', 'x')?.count, 2); });
+describe('loop detector', () => { it('signals at threshold', () => { const detector = new LoopDetector(2); expect(detector.observe('identical_tool_call', 'x')).toBeNull(); expect(detector.observe('identical_tool_call', 'x')?.count).toBe(2); }); });
