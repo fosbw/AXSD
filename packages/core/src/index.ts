@@ -9,6 +9,7 @@ export * from './budget-guard.js';
 export * from './budget-enforcer.js';
 export * from './auth.js';
 export * from './routing.js';
+export * from './capability-registry.js';
 export * from './approval.js';
 export * from './isolation.js';
 export * from './untrusted-content.js';
