@@ -1,0 +1,2 @@
+export interface SecretResolver { resolve(reference: string): Promise<string>; }
+export class EnvironmentSecretResolver implements SecretResolver { async resolve(reference: string): Promise<string> { const value = process.env[reference]; if (!value) throw new Error(`SECRET_NOT_FOUND:${reference}`); return value; } }
