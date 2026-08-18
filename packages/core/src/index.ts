@@ -1,7 +1,12 @@
 export * from './domain.js';
 export * from './policy.js';
+export * from './policy-precedence.js';
+export * from './control-decision.js';
+export * from './control-pipeline.js';
 export * from './risk.js';
 export * from './budget-policy.js';
+export * from './budget-guard.js';
+export * from './budget-enforcer.js';
 export * from './auth.js';
 export * from './routing.js';
 export * from './approval.js';
@@ -10,3 +15,4 @@ export * from './untrusted-content.js';
 export * from './risk-rules.js';
 export * from './prompt-injection.js';
 export * from './argument-validation.js';
+export * from './execution-guard.js';
