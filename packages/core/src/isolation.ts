@@ -1,0 +1,3 @@
+export type ExecutionBoundary = 'LOCAL' | 'SANDBOX' | 'CONTAINER' | 'REMOTE' | 'CLOUD';
+export interface IsolationProfile { boundary: ExecutionBoundary; network: 'none' | 'restricted' | 'full'; filesystem: 'readonly' | 'workspace' | 'isolated'; privileged: boolean; }
+export const DEFAULT_UNTRUSTED_PROFILE: IsolationProfile = { boundary: 'SANDBOX', network: 'restricted', filesystem: 'isolated', privileged: false };
