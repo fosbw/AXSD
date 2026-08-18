@@ -1,0 +1,3 @@
+# Disaster recovery
+
+Critical scenarios include database loss, worker loss, provider disconnect, interrupted execution, corrupted state, and unavailable secrets. Fail closed for authorization state. Resume only from a validated checkpoint. Non-idempotent actions must not be retried automatically. After recovery, verify audit continuity, policy version, resource health, and pending approvals before allowing execution.
