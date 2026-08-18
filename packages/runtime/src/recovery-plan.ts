@@ -1,0 +1,3 @@
+export type RecoveryAction='RESUME'|'RETRY_CHECKPOINT'|'FAIL_SAFE'|'MANUAL_REVIEW';
+export interface RecoveryPlan{action:RecoveryAction;reason:string;checkpointId?:string;}
+export function planRecovery(input:{hasValidCheckpoint:boolean;errorCode:string;retryable:boolean;externalSideEffect:boolean}):RecoveryPlan{if(input.externalSideEffect)return {action:'MANUAL_REVIEW',reason:'External side effect requires explicit recovery decision'};if(input.hasValidCheckpoint&&input.retryable)return {action:'RETRY_CHECKPOINT',reason:'Retry from validated checkpoint'};if(input.retryable)return {action:'RESUME',reason:'Retryable failure without checkpoint'};return {action:'FAIL_SAFE',reason:`Non-retryable failure: ${input.errorCode}`};}
