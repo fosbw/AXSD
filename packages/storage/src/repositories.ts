@@ -1,4 +1,8 @@
-export interface ResourceRecord { id: string; name: string; type: string; provider: string; capabilities: string[]; status: string; metadata: Record<string, unknown>; }
+export interface ResourceRecord {
+  id: string; name: string; type: string; provider: string; version?: string;
+  capabilities: string[]; status: string; health?: string; source?: string; adapter?: string;
+  metadata: Record<string, unknown>; createdAt?: string; updatedAt?: string; lastSeen?: string;
+}
 export interface AuditRecord { id: string; actorId: string; action: string; resourceId?: string; risk: string; decision: string; timestamp: string; metadata: Record<string, unknown>; }
 
 export interface ResourceRepository { list(): Promise<ResourceRecord[]>; get(id: string): Promise<ResourceRecord | null>; upsert(resource: ResourceRecord): Promise<void>; remove(id: string): Promise<boolean>; }
@@ -8,7 +12,11 @@ export class InMemoryResourceRepository implements ResourceRepository {
   private readonly items = new Map<string, ResourceRecord>();
   async list() { return [...this.items.values()]; }
   async get(id: string) { return this.items.get(id) ?? null; }
-  async upsert(resource: ResourceRecord) { this.items.set(resource.id, resource); }
+  async upsert(resource: ResourceRecord) {
+    const now = new Date().toISOString();
+    const existing = this.items.get(resource.id);
+    this.items.set(resource.id, { ...resource, createdAt: existing?.createdAt ?? resource.createdAt ?? now, updatedAt: now });
+  }
   async remove(id: string) { return this.items.delete(id); }
 }
 
