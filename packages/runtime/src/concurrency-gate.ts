@@ -1,0 +1,1 @@
+export class ConcurrencyGate{private active=0;constructor(private readonly max:number){if(max<1)throw new Error('INVALID_CONCURRENCY');}tryAcquire(){if(this.active>=this.max)return false;this.active++;return true;}release(){if(this.active>0)this.active--;}getActive(){return this.active;}getAvailable(){return this.max-this.active;}}
