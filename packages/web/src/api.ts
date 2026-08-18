@@ -1,0 +1,1 @@
+export async function getResources<T>(): Promise<T[]> { const response = await fetch('/api/v1/resources'); if (!response.ok) throw new Error('Resource request failed'); const payload = await response.json() as { data: T[] }; return payload.data; }
