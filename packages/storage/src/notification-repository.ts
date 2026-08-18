@@ -1,0 +1,3 @@
+import type { Pool } from 'pg';
+export interface NotificationRecord{id:string;userId:string;type:string;title:string;body:string;}
+export class PostgresNotificationRepository{constructor(private readonly pool:Pool){}async create(n:NotificationRecord){await this.pool.query(`INSERT INTO notifications(id,user_id,type,title,body) VALUES($1,$2,$3,$4,$5)`,[n.id,n.userId,n.type,n.title,n.body]);}async list(userId:string){const {rows}=await this.pool.query(`SELECT id,user_id AS "userId",type,title,body,created_at AS "createdAt" FROM notifications WHERE user_id=$1 ORDER BY created_at DESC LIMIT 100`,[userId]);return rows;}async markRead(id:string,userId:string){await this.pool.query(`UPDATE notifications SET read_at=NOW() WHERE id=$1 AND user_id=$2`,[id,userId]);}}
