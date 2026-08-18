@@ -1,6 +1,6 @@
-import { InMemoryAuditRepository, InMemoryResourceRepository } from '@axsd/storage';
+import { InMemoryAuditRepository, InMemoryResourceRepository, PostgresResourceRepository, createPool, type ResourceRepository } from '@axsd/storage';
 
-export const container = {
-  resources: new InMemoryResourceRepository(),
-  audit: new InMemoryAuditRepository(),
-};
+const pool = process.env.DATABASE_URL ? createPool() : null;
+const resources: ResourceRepository = pool ? new PostgresResourceRepository(pool) : new InMemoryResourceRepository();
+
+export const container = { resources, audit: new InMemoryAuditRepository(), pool };
