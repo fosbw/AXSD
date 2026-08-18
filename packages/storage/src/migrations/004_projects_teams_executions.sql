@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS teams (id TEXT PRIMARY KEY, name TEXT NOT NULL, owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS team_members (team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, role TEXT NOT NULL CHECK(role IN ('OWNER','ADMIN','MEMBER','VIEWER')), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY(team_id,user_id));
+CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT, name TEXT NOT NULL, instructions TEXT, status TEXT NOT NULL CHECK(status IN ('ACTIVE','ARCHIVED')), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+CREATE INDEX IF NOT EXISTS projects_owner_idx ON projects(owner_id);
+CREATE TABLE IF NOT EXISTS executions (id TEXT PRIMARY KEY, session_id TEXT NOT NULL, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT, agent_id TEXT, model_id TEXT, resource_id TEXT, action TEXT NOT NULL, status TEXT NOT NULL, retries INTEGER NOT NULL DEFAULT 0, checkpoint_id TEXT, error_code TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+CREATE INDEX IF NOT EXISTS executions_session_idx ON executions(session_id,created_at DESC);
+CREATE INDEX IF NOT EXISTS executions_user_idx ON executions(user_id,created_at DESC);
