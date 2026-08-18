@@ -3,6 +3,7 @@ export * from './policy.js';
 export * from './policy-precedence.js';
 export * from './control-decision.js';
 export * from './control-pipeline.js';
+export * from './control-pipeline-guard.js';
 export * from './risk.js';
 export * from './budget-policy.js';
 export * from './budget-guard.js';
