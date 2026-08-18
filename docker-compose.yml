@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: axsd
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
       POSTGRES_DB: axsd
     volumes:
       - axsd-postgres:/var/lib/postgresql/data
@@ -20,14 +20,21 @@ services:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 3000
-      DATABASE_URL: postgresql://axsd:${POSTGRES_PASSWORD:-change-me}@postgres:5432/axsd
+      DATABASE_URL: postgresql://axsd:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/axsd
+      AUTH_DISABLED: "false"
     depends_on:
       postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/v1/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports: ["3000:3000"]
   web:
     build: { context: ., dockerfile: packages/web/Dockerfile }
     restart: unless-stopped
-    depends_on: [api]
+    depends_on:
+      api: { condition: service_healthy }
     ports: ["8080:80"]
 volumes:
   axsd-postgres:
