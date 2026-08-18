@@ -4,4 +4,5 @@ export * from './loop-detector.js';
 export * from './checkpoint.js';
 export * from './cancellation.js';
 export * from './execution-service.js';
+export * from './adapter-executor.js';
 export * from './kill-switch.js';
