@@ -6,3 +6,7 @@ export * from './auth.js';
 export * from './routing.js';
 export * from './approval.js';
 export * from './isolation.js';
+export * from './untrusted-content.js';
+export * from './risk-rules.js';
+export * from './prompt-injection.js';
+export * from './argument-validation.js';
