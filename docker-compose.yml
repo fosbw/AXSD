@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: axsd
+      POSTGRES_PASSWORD: axsd
+      POSTGRES_DB: axsd
+    volumes:
+      - axsd-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U axsd -d axsd"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  axsd-postgres:
