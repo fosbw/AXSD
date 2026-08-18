@@ -5,3 +5,5 @@ export * from './security.js';
 export * from './health.js';
 export * from './mcp.js';
 export * from './provider.js';
+export * from './secrets.js';
+export * from './http-json.js';
