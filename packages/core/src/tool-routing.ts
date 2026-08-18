@@ -1,0 +1,2 @@
+import type {Resource} from './domain.js';
+export function rankTools(task:string,resources:Resource[],requiredCapabilities:string[],blockedIds:ReadonlySet<string>=new Set()):Resource[]{const words=new Set(task.toLowerCase().split(/[^a-z0-9_:-]+/).filter(Boolean));return resources.filter(r=>r.type==='tool'&&r.status==='enabled'&&!blockedIds.has(r.id)&&requiredCapabilities.every(c=>r.capabilities.includes(c))).map(r=>({r,score:r.capabilities.reduce((n,c)=>n+(words.has(c.toLowerCase())?3:1),0)})).sort((a,b)=>b.score-a.score).map(x=>x.r);}
