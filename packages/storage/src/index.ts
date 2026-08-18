@@ -1,10 +1,14 @@
 export type { ResourceRecord, AuditRecord, ResourceRepository, AuditRepository } from './repositories.js';
 export { InMemoryResourceRepository, InMemoryAuditRepository } from './repositories.js';
 export { PostgresResourceRepository } from './postgres-resource-repository.js';
-export { PostgresApiKeyRepository } from './api-key-repository.js';
-export { PostgresUserRepository } from './user-repository.js';
-export type { ApiKeyRecord } from './api-key-repository.js';
-export type { UserRecord } from './user-repository.js';
 export { createPool, checkDatabase } from './postgres.js';
 export { migrate } from './migrate.js';
 export { auditDigest } from './audit.js';
+export { PostgresUserRepository } from './user-repository.js';
+export { PostgresApiKeyRepository } from './api-key-repository.js';
+export { PostgresExecutionRepository } from './execution-repository.js';
+export { PostgresProjectRepository } from './project-repository.js';
+export { PostgresTeamRepository } from './team-repository.js';
+export type { ExecutionRecord, ExecutionStatus } from './execution-repository.js';
+export type { ProjectRecord } from './project-repository.js';
+export type { TeamRecord, TeamMember } from './team-repository.js';
