@@ -1,0 +1,2 @@
+import { createHash } from 'node:crypto';
+export function approvalDigest(action:string, resourceId:string, args:unknown):string { const normalized=JSON.stringify(args,(k,v)=>{if(v&&typeof v==='object'&&!Array.isArray(v))return Object.fromEntries(Object.entries(v).sort(([a],[b])=>a.localeCompare(b)));return v;}); return createHash('sha256').update(`${resourceId}\n${action}\n${normalized}`).digest('hex'); }
