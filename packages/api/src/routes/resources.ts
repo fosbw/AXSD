@@ -1,48 +1,13 @@
 import type { FastifyInstance } from 'fastify';
 import type { ResourceType } from '@axsd/core';
 import type { ResourceRepository } from '@axsd/storage';
-
 const RESOURCE_TYPES: readonly ResourceType[] = ['model','agent','tool','mcp','api','environment','container','git','cloud','plugin'];
 const RESOURCE_STATUSES = ['enabled','disabled','disconnected'] as const;
 type ResourceStatus = typeof RESOURCE_STATUSES[number];
-
-function positiveInt(value: string | undefined, fallback: number, max: number): number {
-  const parsed = Number.parseInt(value ?? '', 10);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, max) : fallback;
-}
-
-export function registerResourceRoutes(app: FastifyInstance, repository: ResourceRepository): void {
-  app.get<{ Querystring: { type?: ResourceType; provider?: string; status?: ResourceStatus; search?: string; page?: string; limit?: string } }>('/api/v1/resources', async (request) => {
-    const all = await repository.list();
-    const query = request.query;
-    const search = query.search?.trim().toLowerCase();
-    const filtered = all.filter((resource) =>
-      (!query.type || resource.type === query.type) &&
-      (!query.provider || resource.provider === query.provider) &&
-      (!query.status || resource.status === query.status) &&
-      (!search || `${resource.id} ${resource.name} ${resource.provider}`.toLowerCase().includes(search))
-    );
-    const page = positiveInt(query.page, 1, 1_000_000);
-    const limit = positiveInt(query.limit, 50, 100);
-    const start = (page - 1) * limit;
-    return { data: filtered.slice(start, start + limit), meta: { page, limit, total: filtered.length, pages: Math.ceil(filtered.length / limit) } };
-  });
-
-  app.get<{ Params: { id: string } }>('/api/v1/resources/:id', async (request, reply) => {
-    const resource = await repository.get(request.params.id);
-    if (!resource) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Resource not found' } });
-    return { data: resource };
-  });
-
-  app.post<{ Body: { id: string; name: string; type: ResourceType; provider: string; version?: string; capabilities?: string[]; status?: ResourceStatus; source?: string; adapter?: string; metadata?: Record<string, unknown> } }>('/api/v1/resources', async (request, reply) => {
-    const body = request.body;
-    if (!body || typeof body !== 'object') return reply.status(400).send({ error: { code: 'VALIDATION_ERR', message: 'Request body is required' } });
-    const { id, name, type, provider, version, capabilities = [], status = 'enabled', source = 'api', adapter = 'default', metadata = {} } = body;
-    if (typeof id !== 'string' || !id.trim() || typeof name !== 'string' || !name.trim() || typeof provider !== 'string' || !provider.trim() || !RESOURCE_TYPES.includes(type) || !Array.isArray(capabilities) || !capabilities.every((value) => typeof value === 'string' && value.length > 0) || !RESOURCE_STATUSES.includes(status)) {
-      return reply.status(400).send({ error: { code: 'VALIDATION_ERR', message: 'Invalid resource definition' } });
-    }
-    const resource = { id: id.trim(), name: name.trim(), type, provider: provider.trim(), version, capabilities, status, health: 'unknown' as const, source, adapter, metadata };
-    await repository.upsert(resource);
-    return reply.status(201).send({ data: resource });
-  });
+function positiveInt(value:string|undefined,fallback:number,max:number):number{const parsed=Number.parseInt(value??'',10);return Number.isFinite(parsed)&&parsed>0?Math.min(parsed,max):fallback;}
+export function registerResourceRoutes(app:FastifyInstance,repository:ResourceRepository):void{
+ const requireAuth=async(request:any,reply:any)=>{const id=request.principal?.id;if(!id){reply.status(401).send({error:{code:'AUTH_ERR',message:'Authentication required'}});return null;}return id;};
+ app.get<{Querystring:{type?:ResourceType;provider?:string;status?:ResourceStatus;search?:string;page?:string;limit?:string}}>('/api/v1/resources',async(request,reply)=>{if(!await requireAuth(request,reply))return;const all=await repository.list();const query=request.query;const search=query.search?.trim().toLowerCase();const filtered=all.filter(r=>(!query.type||r.type===query.type)&&(!query.provider||r.provider===query.provider)&&(!query.status||r.status===query.status)&&(!search||`${r.id} ${r.name} ${r.provider}`.toLowerCase().includes(search)));const page=positiveInt(query.page,1,1_000_000);const limit=positiveInt(query.limit,50,100);const start=(page-1)*limit;return{data:filtered.slice(start,start+limit),meta:{page,limit,total:filtered.length,pages:Math.ceil(filtered.length/limit)}};});
+ app.get<{Params:{id:string}}>('/api/v1/resources/:id',async(request,reply)=>{if(!await requireAuth(request,reply))return;const resource=await repository.get(request.params.id);if(!resource)return reply.status(404).send({error:{code:'NOT_FOUND',message:'Resource not found'}});return{data:resource};});
+ app.post<{Body:{id:string;name:string;type:ResourceType;provider:string;version?:string;capabilities?:string[];status?:ResourceStatus;source?:string;adapter?:string;metadata?:Record<string,unknown>}}>('/api/v1/resources',async(request,reply)=>{if(!await requireAuth(request,reply))return;const body=request.body;if(!body||typeof body!=='object')return reply.status(400).send({error:{code:'VALIDATION_ERR',message:'Request body is required'}});const{id,name,type,provider,version,capabilities=[],status='enabled',source='api',adapter='default',metadata={}}=body;if(typeof id!=='string'||!id.trim()||typeof name!=='string'||!name.trim()||typeof provider!=='string'||!provider.trim()||!RESOURCE_TYPES.includes(type)||!Array.isArray(capabilities)||!capabilities.every(v=>typeof v==='string'&&v.length>0)||!RESOURCE_STATUSES.includes(status)||typeof metadata!=='object'||metadata===null||Array.isArray(metadata))return reply.status(400).send({error:{code:'VALIDATION_ERR',message:'Invalid resource definition'}});const resource={id:id.trim(),name:name.trim(),type,provider:provider.trim(),version,capabilities,status,health:'unknown' as const,source,adapter,metadata};await repository.upsert(resource);return reply.status(201).send({data:resource});});
 }
