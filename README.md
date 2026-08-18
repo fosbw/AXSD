@@ -1,75 +1,51 @@
 # AXSD
 
-**AI eXecution & Safety Director** — a model-, agent-, tool-, provider-, and environment-agnostic control plane for AI execution.
+**AI eXecution & Safety Director** — a model-, agent-, tool-, provider-, and environment-agnostic control plane for governed AI execution.
 
-> Status: foundation build in progress. The repository is being implemented as a production-oriented platform, not a UI-only demo.
+> Status: active production-oriented build. Core, runtime, adapter, API, persistence, web console, CLI, container deployment, migrations, and CI foundations are implemented; provider-specific integrations and full production security validation remain release gates.
 
 ## Architecture
 
 ```text
-User / API / CLI
-       |
-       v
-Identity -> Session -> Intent
-       |
-       v
-Resource Registry -> Capability Matching
-       |
-       v
-Policy -> Permission -> Risk -> Budget -> Approval
-       |
-       v
-Execution Runtime -> Checkpoints -> Recovery
-       |
-       +---- Adapters: Models / Agents / Tools / MCP / APIs / Git / Containers / Cloud
-       |
-       v
-Audit + Metrics + Notifications
+User / Web / API / CLI
+        |
+ Identity -> Session -> Project
+        |
+ Resource Registry -> Capability Routing -> Risk
+        |
+ Policy -> Permission -> Budget -> Approval
+        |
+ Execution Runtime -> Isolation -> Checkpoint -> Recovery
+        |
+ Adapters: Models / Agents / Tools / MCP / APIs / Git / Containers / Cloud
+        |
+ Audit -> Metrics -> Notifications
 ```
 
-## Core guarantees
+## Packages
 
-- Model/provider agnostic core
-- Explicit authority boundary: model and tool output are untrusted input
-- Central policy and permission decisions
-- Approval gates for risky operations
-- Persistent execution state and checkpoints
-- Token/cost/tool-call/time/step budgets
-- Structured audit events without secrets
-- Adapter-based integrations
-- Local-first deployment with container/cloud options
-- Testable core with fake providers isolated to tests
-
-## Repository layout
-
-```text
-apps/
-  api/                 API and control-plane service
-  web/                 Web console
-packages/
-  core/                Domain types and deterministic control logic
-  adapters/            Provider/resource adapter contracts
-  policy/              Policy, permission and risk evaluation
-  runtime/             Execution state machine and budget enforcement
-  audit/               Append-only audit abstractions
-  db/                  Persistence schema and migrations
-  cli/                 Operational CLI
-infra/
-  docker/              Container/deployment assets
-docs/
-  architecture/        Architecture and threat-model documentation
-tests/
-  fixtures/             Test-only providers and fixtures
-```
+- `packages/core` — domain types, policy evaluation, risk, budgets, routing, authorization and isolation profiles.
+- `packages/runtime` — execution states, cancellation, checkpoints, loop detection, kill switch and controlled execution.
+- `packages/adapters` — resource/provider contracts, discovery, secret redaction, health and MCP boundaries.
+- `packages/storage` — PostgreSQL connection, migrations, resource persistence and tamper-evident audit primitives.
+- `packages/api` — versioned Fastify API, resources, sessions, projects, policies, budgets, approvals, executions, audit, discovery and OpenAPI.
+- `packages/web` — responsive React control-plane console.
+- `packages/cli` — operational command surface.
 
 ## Security model
 
-AXSD never treats model output, tool output, MCP responses, files, or remote content as authority. Authority comes from authenticated identity plus the control-plane policy decision. Secrets are represented through a secret-store abstraction and must never be written to application logs.
+Model output, tool output, MCP responses, files and remote content are untrusted data. They never become policy authority. Permission comes from the control plane. Secrets are represented by references and are not intended for logs or UI display. High-impact operations must pass explicit policy and approval gates.
 
-High-impact actions are deny/ask by policy unless explicitly permitted. Emergency stop is designed as a control-plane operation rather than an instruction sent to an agent.
+## Local development
 
-## Development
+1. Copy `.env.example` to `.env` and provide real local values.
+2. Run PostgreSQL or use `docker compose up --build`.
+3. Run `pnpm install`.
+4. Run `pnpm typecheck`, `pnpm build`, and `pnpm test`.
+5. Start API and web with `pnpm dev`.
 
-The initial repository uses a pnpm workspace. Copy `.env.example` to `.env` for local development; never commit real credentials.
+Never commit credentials. Production deployments must replace the development database password and configure a real authentication/secret provider.
 
-This project is licensed separately from its source-control visibility. Until a license is explicitly selected, no additional permissions beyond applicable copyright law should be assumed.
+## Release gate
+
+AXSD is not called production-ready merely because it builds. A release requires passing integration/E2E/security/load/recovery testing, a real authentication provider, hardened secret storage, real adapter integrations, operational backups, and a validated deployment/rollback procedure.
