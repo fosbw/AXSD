@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: axsd
-      POSTGRES_PASSWORD: axsd
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
       POSTGRES_DB: axsd
     volumes:
       - axsd-postgres:/var/lib/postgresql/data
@@ -13,6 +13,21 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
-
+  api:
+    build: { context: ., dockerfile: packages/api/Dockerfile }
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      DATABASE_URL: postgresql://axsd:${POSTGRES_PASSWORD:-change-me}@postgres:5432/axsd
+    depends_on:
+      postgres: { condition: service_healthy }
+    ports: ["3000:3000"]
+  web:
+    build: { context: ., dockerfile: packages/web/Dockerfile }
+    restart: unless-stopped
+    depends_on: [api]
+    ports: ["8080:80"]
 volumes:
   axsd-postgres:
