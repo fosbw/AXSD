@@ -39,4 +39,47 @@ describe('control pipeline', () => {
     expect(result).toBe('ok');
     expect(order).toEqual(['budget', 'approval', 'execute']);
   });
+
+  it('fails closed when the budget guard rejects', async () => {
+    const events: string[] = [];
+    let invoked = false;
+    const error = new Error('budget exceeded');
+    await expect(executeControlled(request, {
+      policy: { evaluate: () => ({ effect: 'ALLOW', reason: 'allowed', policyIds: ['p1'], requiresApproval: false, decidedAt: new Date().toISOString() }) },
+      budget: { check: () => { throw error; } },
+      approval: { waitForApproval: async () => undefined },
+      invoker: { invoke: async () => { invoked = true; return 'bad'; } },
+      audit: audit(events),
+    })).rejects.toBe(error);
+    expect(invoked).toBe(false);
+    expect(events).toEqual(['budget_denied']);
+  });
+
+  it('fails closed when approval is rejected', async () => {
+    const events: string[] = [];
+    let invoked = false;
+    const error = new Error('approval denied');
+    await expect(executeControlled(request, {
+      policy: { evaluate: () => ({ effect: 'ASK', reason: 'high risk', policyIds: ['p1'], requiresApproval: true, decidedAt: new Date().toISOString() }) },
+      budget: { check: () => undefined },
+      approval: { waitForApproval: async () => { throw error; } },
+      invoker: { invoke: async () => { invoked = true; return 'bad'; } },
+      audit: audit(events),
+    })).rejects.toBe(error);
+    expect(invoked).toBe(false);
+    expect(events).toEqual(['approval_requested', 'approval_failed']);
+  });
+
+  it('audits execution errors without swallowing the original error', async () => {
+    const events: string[] = [];
+    const error = new Error('tool failed');
+    await expect(executeControlled(request, {
+      policy: { evaluate: () => ({ effect: 'ALLOW', reason: 'allowed', policyIds: ['p1'], requiresApproval: false, decidedAt: new Date().toISOString() }) },
+      budget: { check: () => undefined },
+      approval: { waitForApproval: async () => undefined },
+      invoker: { invoke: async () => { throw error; } },
+      audit: audit(events),
+    })).rejects.toBe(error);
+    expect(events).toEqual(['execution_started', 'execution_failed']);
+  });
 });
