@@ -1,0 +1,3 @@
+export interface UsageDelta { tokens?:number; cost?:number; toolCalls?:number; steps?:number; durationMs?:number; }
+export interface BudgetLimits { tokens?:number; cost?:number; toolCalls?:number; steps?:number; durationMs?:number; }
+export class BudgetLedger { private readonly usage:UsageDelta={}; constructor(private readonly limits:BudgetLimits){} reserve(d:UsageDelta){for(const k of Object.keys(d) as (keyof UsageDelta)[]){const next=(this.usage[k]??0)+(d[k]??0);const limit=this.limits[k];if(limit!==undefined&&next>limit)return false;}Object.assign(this.usage,Object.fromEntries(Object.keys(d).map(k=>[k,(this.usage[k as keyof UsageDelta]??0)+(d[k as keyof UsageDelta]??0)])));return true;} snapshot(){return {...this.usage};} }
