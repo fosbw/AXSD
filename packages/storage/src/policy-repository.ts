@@ -1,0 +1,2 @@
+import type { PolicyRule } from '@axsd/core';
+export class InMemoryPolicyRepository { private readonly items = new Map<string, PolicyRule>(); list() { return [...this.items.values()]; } get(id: string) { return this.items.get(id) ?? null; } upsert(policy: PolicyRule) { this.items.set(policy.id, policy); return policy; } remove(id: string) { return this.items.delete(id); } }
