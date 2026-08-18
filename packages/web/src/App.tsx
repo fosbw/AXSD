@@ -1,38 +1,21 @@
 import { useEffect, useState } from 'react';
+import { decideApproval, stopExecution } from './api-client';
 
 type Resource={id:string;name:string;type:string;provider:string;status:string;health?:string;capabilities:string[]};
 type Item={id:string;status?:string;action?:string;name?:string;decision?:string;actorId?:string;timestamp?:string;risk?:string};
 const api=async<T>(path:string,init?:RequestInit):Promise<T>=>{const r=await fetch(path,{...init,headers:{'Content-Type':'application/json',...(init?.headers||{})}});if(!r.ok)throw new Error(`${r.status} ${r.statusText}`);return r.status===204?({} as T):r.json();};
-
 const tabs=['Overview','Resources','Approvals','Executions','Policies','Budgets','Audit'] as const;
 type Tab=typeof tabs[number];
-
 export function App(){
-  const [tab,setTab]=useState<Tab>('Overview');
-  const [resources,setResources]=useState<Resource[]>([]);
-  const [approvals,setApprovals]=useState<Item[]>([]);
-  const [executions,setExecutions]=useState<Item[]>([]);
-  const [policies,setPolicies]=useState<Item[]>([]);
-  const [budgets,setBudgets]=useState<Item[]>([]);
-  const [audit,setAudit]=useState<Item[]>([]);
-  const [error,setError]=useState<string|null>(null);
-  const load=()=>Promise.all([
-    api<{data:Resource[]}>('/api/v1/resources'),api<{data:Item[]}>('/api/v1/approvals'),api<{data:Item[]}>('/api/v1/executions'),
-    api<{data:Item[]}>('/api/v1/policies'),api<{data:Item[]}>('/api/v1/budgets'),api<{data:Item[]}>('/api/v1/audit')
-  ]).then(([r,a,e,p,b,au])=>{setResources(r.data||[]);setApprovals(a.data||[]);setExecutions(e.data||[]);setPolicies(p.data||[]);setBudgets(b.data||[]);setAudit(au.data||[]);setError(null)}).catch(e=>setError(e.message));
-  useEffect(()=>{void load()},[]);
-  const renderList=(items:Item[],empty:string,action?:boolean)=><>{items.length?<ul>{items.map(x=><li key={x.id}><div><strong>{x.action||x.name||x.id}</strong><small>{[x.status,x.risk,x.actorId,x.timestamp].filter(Boolean).join(' · ')}</small></div>{action?<button onClick={()=>setError('Approval action requires the authenticated approval API.')}>Review</button>:<span>{x.status||x.decision||'—'}</span>}</li>)}</ul>:<div className="empty">{empty}</div>}</>;
-  return <main className="shell">
-    <header><div><span className="eyebrow">AXSD CONTROL PLANE</span><h1>AI execution, under your authority.</h1><p>Models, agents, tools and environments routed through policy, risk, budget and approval controls.</p></div><div className="status" aria-label="Control plane status">● Control plane online</div></header>
-    <nav className="nav" aria-label="Primary">{tabs.map(x=><button className={tab===x?'active':''} aria-current={tab===x?'page':undefined} onClick={()=>setTab(x)} key={x}>{x}</button>)}</nav>
-    {error&&<div className="alert" role="alert">{error}<button onClick={()=>void load()}>Retry</button></div>}
-    {tab==='Overview'&&<section className="grid"><article><span>Registered resources</span><strong>{resources.length}</strong></article><article><span>Pending approvals</span><strong>{approvals.length}</strong></article><article><span>Executions</span><strong>{executions.length}</strong></article><article><span>Audit events</span><strong>{audit.length}</strong></article></section>}
-    {tab==='Overview'&&<section className="panel"><div className="panel-head"><h2>Control status</h2><button onClick={()=>void load()}>Refresh</button></div><div className="empty">Authority remains in the control plane: resource selection is advisory; policy, permission, risk, budget and approval gates remain authoritative.</div></section>}
-    {tab==='Resources'&&<section className="panel"><div className="panel-head"><h2>Resources</h2><span>{resources.length} registered</span></div>{resources.length?<ul>{resources.map(r=><li key={r.id}><div><strong>{r.name}</strong><small>{r.provider} · {r.type} · {r.health||'unknown'} · {(r.capabilities||[]).join(', ')||'capabilities unknown'}</small></div><span>{r.status}</span></li>)}</ul>:<div className="empty">No resources registered. Discovery and adapters can populate this registry.</div>}</section>}
-    {tab==='Approvals'&&<section className="panel"><h2>Pending approvals</h2>{renderList(approvals,'No pending approvals.',true)}</section>}
-    {tab==='Executions'&&<section className="panel"><h2>Execution timeline</h2>{renderList(executions,'No executions.')}</section>}
-    {tab==='Policies'&&<section className="panel"><h2>Policies</h2>{renderList(policies,'No policies configured.')}</section>}
-    {tab==='Budgets'&&<section className="panel"><h2>Budgets</h2>{renderList(budgets,'No budgets configured.')}</section>}
-    {tab==='Audit'&&<section className="panel"><h2>Audit trail</h2>{renderList(audit,'No audit events.')}</section>}
-  </main>;
+ const [tab,setTab]=useState<Tab>('Overview'); const [resources,setResources]=useState<Resource[]>([]); const [approvals,setApprovals]=useState<Item[]>([]); const [executions,setExecutions]=useState<Item[]>([]); const [policies,setPolicies]=useState<Item[]>([]); const [budgets,setBudgets]=useState<Item[]>([]); const [audit,setAudit]=useState<Item[]>([]); const [error,setError]=useState<string|null>(null);
+ const load=()=>Promise.all([api<{data:Resource[]}>('/api/v1/resources'),api<{data:Item[]}>('/api/v1/approvals'),api<{data:Item[]}>('/api/v1/executions'),api<{data:Item[]}>('/api/v1/policies'),api<{data:Item[]}>('/api/v1/budgets'),api<{data:Item[]}>('/api/v1/audit')]).then(([r,a,e,p,b,au])=>{setResources(r.data||[]);setApprovals(a.data||[]);setExecutions(e.data||[]);setPolicies(p.data||[]);setBudgets(b.data||[]);setAudit(au.data||[]);setError(null)}).catch(e=>setError(e.message));
+ useEffect(()=>{void load()},[]);
+ const review=async(id:string,decision:'APPROVE_ONCE'|'APPROVE_SESSION'|'DENY'|'CANCEL')=>{try{await decideApproval(id,decision);await load()}catch(e){setError(e instanceof Error?e.message:'Approval failed')}};
+ const stop=async(id:string)=>{try{await stopExecution(id);await load()}catch(e){setError(e instanceof Error?e.message:'Stop failed')}};
+ const renderList=(items:Item[],empty:string,kind:'approval'|'execution'|'plain'='plain')=><>{items.length?<ul>{items.map(x=><li key={x.id}><div><strong>{x.action||x.name||x.id}</strong><small>{[x.status,x.risk,x.actorId,x.timestamp].filter(Boolean).join(' · ')}</small></div>{kind==='approval'?<div className="actions"><button onClick={()=>void review(x.id,'APPROVE_ONCE')}>Approve</button><button onClick={()=>void review(x.id,'DENY')}>Deny</button></div>:kind==='execution'&&x.status&&x.status!=='COMPLETED'&&x.status!=='FAILED'&&x.status!=='CANCELLED'?<button onClick={()=>void stop(x.id)}>Stop</button>:<span>{x.status||x.decision||'—'}</span>}</li>)}</ul>:<div className="empty">{empty}</div>}</>;
+ return <main className="shell"><header><div><span className="eyebrow">AXSD CONTROL PLANE</span><h1>AI execution, under your authority.</h1><p>Models, agents, tools and environments routed through policy, risk, budget and approval controls.</p></div><div className="status" aria-label="Control plane status">● Control plane online</div></header><nav className="nav" aria-label="Primary">{tabs.map(x=><button className={tab===x?'active':''} aria-current={tab===x?'page':undefined} onClick={()=>setTab(x)} key={x}>{x}</button>)}</nav>{error&&<div className="alert" role="alert">{error}<button onClick={()=>void load()}>Retry</button></div>}
+ {tab==='Overview'&&<><section className="grid"><article><span>Registered resources</span><strong>{resources.length}</strong></article><article><span>Pending approvals</span><strong>{approvals.length}</strong></article><article><span>Executions</span><strong>{executions.length}</strong></article><article><span>Audit events</span><strong>{audit.length}</strong></article></section><section className="panel"><div className="panel-head"><h2>Control status</h2><button onClick={()=>void load()}>Refresh</button></div><div className="empty">Authority remains in the control plane: resource selection is advisory; policy, permission, risk, budget and approval gates remain authoritative.</div></section></>}
+ {tab==='Resources'&&<section className="panel"><div className="panel-head"><h2>Resources</h2><span>{resources.length} registered</span></div>{resources.length?<ul>{resources.map(r=><li key={r.id}><div><strong>{r.name}</strong><small>{r.provider} · {r.type} · {r.health||'unknown'} · {(r.capabilities||[]).join(', ')||'capabilities unknown'}</small></div><span>{r.status}</span></li>)}</ul>:<div className="empty">No resources registered. Discovery and adapters can populate this registry.</div>}</section>}
+ {tab==='Approvals'&&<section className="panel"><h2>Pending approvals</h2>{renderList(approvals,'No pending approvals.','approval')}</section>}{tab==='Executions'&&<section className="panel"><h2>Execution timeline</h2>{renderList(executions,'No executions.','execution')}</section>}{tab==='Policies'&&<section className="panel"><h2>Policies</h2>{renderList(policies,'No policies configured.')}</section>}{tab==='Budgets'&&<section className="panel"><h2>Budgets</h2>{renderList(budgets,'No budgets configured.')}</section>}{tab==='Audit'&&<section className="panel"><h2>Audit trail</h2>{renderList(audit,'No audit events.')}</section>}
+ </main>;
 }
