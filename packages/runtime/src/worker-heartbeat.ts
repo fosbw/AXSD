@@ -1,0 +1,2 @@
+export interface WorkerHeartbeat{workerId:string;lastSeen:number;activeExecutions:number;}
+export class WorkerRegistry{private workers=new Map<string,WorkerHeartbeat>();heartbeat(workerId:string,activeExecutions:number){this.workers.set(workerId,{workerId,lastSeen:Date.now(),activeExecutions});}healthy(maxAgeMs=30_000){const now=Date.now();return [...this.workers.values()].filter(w=>now-w.lastSeen<=maxAgeMs);}remove(workerId:string){this.workers.delete(workerId);}}
