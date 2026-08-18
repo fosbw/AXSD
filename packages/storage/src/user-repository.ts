@@ -1,0 +1,3 @@
+import type { Pool } from 'pg';
+export interface UserRecord { id: string; email: string; displayName: string; role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER'; }
+export class PostgresUserRepository { constructor(private readonly pool: Pool) {} async get(id: string): Promise<UserRecord | null> { const { rows } = await this.pool.query('SELECT id,email,display_name AS "displayName",role FROM users WHERE id=$1', [id]); return rows[0] ?? null; } async create(user: UserRecord): Promise<void> { await this.pool.query('INSERT INTO users(id,email,display_name,role) VALUES($1,$2,$3,$4)', [user.id,user.email,user.displayName,user.role]); } }
