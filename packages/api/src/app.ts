@@ -17,10 +17,10 @@ import { registerRateLimit } from './rate-limit.js';
 
 export function buildApp(): FastifyInstance {
   const app = Fastify({ logger: true });
-  app.setErrorHandler((error, _request, reply) => { app.log.error(error); return reply.status(500).send({ error: { code: 'INTERNAL_ERR', message: 'Internal server error' } }); });
+  app.setErrorHandler((error, _request, reply) => { app.log.error({ err: error }, 'request failed'); return reply.status(500).send({ error: { code: 'INTERNAL_ERR', message: 'Internal server error' } }); });
   registerRateLimit(app); registerAuthHook(app); registerHealthRoutes(app); registerBootstrapRoute(app); registerUserRoutes(app, container.users);
   registerResourceRoutes(app, container.resources); registerResourceActions(app, container.resources); registerRoutingRoute(app, container.resources);
-  registerAuditRoutes(app, container.audit); registerAuditWriteRoute(app, container.audit); registerDiscoveryRoute(app, []);
+  registerAuditRoutes(app, container.audit); registerAuditWriteRoute(app, container.audit); registerDiscoveryRoute(app, container.discovery);
   registerOpenApiRoute(app); registerExecutionControlRoutes(app); registerDomainRoutes(app);
   return app;
 }
