@@ -1,4 +1,1 @@
-{
-  "name":"axsd","version":"0.1.0","private":true,"description":"Model-agnostic AI control and execution platform","packageManager":"pnpm@10.15.0",
-  "scripts":{"dev":"pnpm --filter @axsd/api dev & pnpm --filter @axsd/web dev","build":"pnpm -r build","test":"pnpm -r test","typecheck":"pnpm -r typecheck","db:migrate":"pnpm --filter @axsd/storage migrate"}
-}
+{"name":"axsd","version":"0.1.0","private":true,"description":"Model-agnostic AI control and execution platform","packageManager":"pnpm@10.15.0","scripts":{"dev":"pnpm --filter @axsd/api dev & pnpm --filter @axsd/web dev","build":"pnpm -r build","test":"pnpm -r test","typecheck":"pnpm -r typecheck"}}
