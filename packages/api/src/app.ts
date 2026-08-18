@@ -3,6 +3,7 @@ import { container } from './container.js';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerResourceRoutes } from './routes/resources.js';
 import { registerAuditRoutes } from './routes/audit.js';
+import { registerDomainRoutes } from './routes/index.js';
 
 export function buildApp(): FastifyInstance {
   const app = Fastify({ logger: true });
@@ -13,5 +14,6 @@ export function buildApp(): FastifyInstance {
   registerHealthRoutes(app);
   registerResourceRoutes(app, container.resources);
   registerAuditRoutes(app, container.audit);
+  registerDomainRoutes(app);
   return app;
 }
