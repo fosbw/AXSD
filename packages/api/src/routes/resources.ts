@@ -3,9 +3,16 @@ import type { ResourceType } from '@axsd/core';
 import type { ResourceRepository } from '@axsd/storage';
 
 const RESOURCE_TYPES: readonly ResourceType[] = ['model','agent','tool','mcp','api','environment','container','git','cloud','plugin'];
+const RESOURCE_STATUSES = ['enabled','disabled','disconnected'] as const;
+type ResourceStatus = typeof RESOURCE_STATUSES[number];
+
+function positiveInt(value: string | undefined, fallback: number, max: number): number {
+  const parsed = Number.parseInt(value ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, max) : fallback;
+}
 
 export function registerResourceRoutes(app: FastifyInstance, repository: ResourceRepository): void {
-  app.get<{ Querystring: { type?: ResourceType; provider?: string; status?: string; search?: string; page?: string; limit?: string } }>('/api/v1/resources', async (request) => {
+  app.get<{ Querystring: { type?: ResourceType; provider?: string; status?: ResourceStatus; search?: string; page?: string; limit?: string } }>('/api/v1/resources', async (request) => {
     const all = await repository.list();
     const query = request.query;
     const search = query.search?.trim().toLowerCase();
@@ -15,10 +22,10 @@ export function registerResourceRoutes(app: FastifyInstance, repository: Resourc
       (!query.status || resource.status === query.status) &&
       (!search || `${resource.id} ${resource.name} ${resource.provider}`.toLowerCase().includes(search))
     );
-    const page = Math.max(1, Number.parseInt(query.page ?? '1', 10) || 1);
-    const limit = Math.min(100, Math.max(1, Number.parseInt(query.limit ?? '50', 10) || 50));
+    const page = positiveInt(query.page, 1, 1_000_000);
+    const limit = positiveInt(query.limit, 50, 100);
     const start = (page - 1) * limit;
-    return { data: filtered.slice(start, start + limit), meta: { page, limit, total: filtered.length } };
+    return { data: filtered.slice(start, start + limit), meta: { page, limit, total: filtered.length, pages: Math.ceil(filtered.length / limit) } };
   });
 
   app.get<{ Params: { id: string } }>('/api/v1/resources/:id', async (request, reply) => {
@@ -27,12 +34,14 @@ export function registerResourceRoutes(app: FastifyInstance, repository: Resourc
     return { data: resource };
   });
 
-  app.post<{ Body: { id: string; name: string; type: ResourceType; provider: string; version?: string; capabilities?: string[]; status?: 'enabled' | 'disabled' | 'disconnected'; source?: string; adapter?: string; metadata?: Record<string, unknown> } }>('/api/v1/resources', async (request, reply) => {
-    const { id, name, type, provider, version, capabilities = [], status = 'enabled', source = 'api', adapter = 'default', metadata = {} } = request.body;
-    if (!id || !name || !provider || !RESOURCE_TYPES.includes(type) || !Array.isArray(capabilities) || !['enabled','disabled','disconnected'].includes(status)) {
+  app.post<{ Body: { id: string; name: string; type: ResourceType; provider: string; version?: string; capabilities?: string[]; status?: ResourceStatus; source?: string; adapter?: string; metadata?: Record<string, unknown> } }>('/api/v1/resources', async (request, reply) => {
+    const body = request.body;
+    if (!body || typeof body !== 'object') return reply.status(400).send({ error: { code: 'VALIDATION_ERR', message: 'Request body is required' } });
+    const { id, name, type, provider, version, capabilities = [], status = 'enabled', source = 'api', adapter = 'default', metadata = {} } = body;
+    if (typeof id !== 'string' || !id.trim() || typeof name !== 'string' || !name.trim() || typeof provider !== 'string' || !provider.trim() || !RESOURCE_TYPES.includes(type) || !Array.isArray(capabilities) || !capabilities.every((value) => typeof value === 'string' && value.length > 0) || !RESOURCE_STATUSES.includes(status)) {
       return reply.status(400).send({ error: { code: 'VALIDATION_ERR', message: 'Invalid resource definition' } });
     }
-    const resource = { id, name, type, provider, version, capabilities, status, health: 'unknown', source, adapter, metadata };
+    const resource = { id: id.trim(), name: name.trim(), type, provider: provider.trim(), version, capabilities, status, health: 'unknown' as const, source, adapter, metadata };
     await repository.upsert(resource);
     return reply.status(201).send({ data: resource });
   });
