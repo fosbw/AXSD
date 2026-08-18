@@ -1,0 +1,2 @@
+export interface QueueJob<T=unknown>{id:string;payload:T;attempts:number;availableAt:number;}
+export class InMemoryExecutionQueue<T=unknown>{private q:QueueJob<T>[]=[];enqueue(payload:T,delayMs=0){const job={id:crypto.randomUUID(),payload,attempts:0,availableAt:Date.now()+delayMs};this.q.push(job);return job.id;}dequeue(){const i=this.q.findIndex(x=>x.availableAt<=Date.now());if(i<0)return null;return this.q.splice(i,1)[0]??null;}size(){return this.q.length;}}
