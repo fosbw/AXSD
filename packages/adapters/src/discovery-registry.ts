@@ -1,5 +1,7 @@
-import type { PartialResource } from './discovery.js';
+import type { Resource } from '@axsd/core';
 import type { DiscoveryContext, DiscoveryProvider } from './discovery.js';
+
+type DiscoveredResource = Partial<Resource>;
 
 /** Registry for trusted discovery providers; providers are explicit, never auto-executed. */
 export class DiscoveryRegistry {
@@ -14,14 +16,14 @@ export class DiscoveryRegistry {
   remove(id: string): boolean { return this.providers.delete(id); }
   list(): DiscoveryProvider[] { return [...this.providers.values()]; }
 
-  async discover(context: DiscoveryContext): Promise<PartialResource[]> {
-    const results: PartialResource[] = [];
+  async discover(context: DiscoveryContext): Promise<DiscoveredResource[]> {
+    const results: DiscoveredResource[] = [];
     for (const provider of this.providers.values()) {
       if (context.signal.aborted) break;
       try {
         results.push(...await provider.discover(context));
       } catch {
-        // Discovery failure is isolated to its provider; callers can audit/report it.
+        // A failed provider must not stop other discovery providers.
       }
     }
     return results;
