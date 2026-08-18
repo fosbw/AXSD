@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { ResourceType } from '@axsd/core';
 
-const resources: Array<{ id: string; name: string; type: ResourceType; status: 'active' | 'disabled'; capabilities: string[] }> = [];
+const resources: Array<{ id: string; name: string; type: ResourceType; status: 'enabled' | 'disabled' | 'disconnected'; capabilities: string[] }> = [];
 
 export function registerResourceRoutes(app: FastifyInstance): void {
   app.get('/api/v1/resources', async () => ({ data: resources, total: resources.length }));
