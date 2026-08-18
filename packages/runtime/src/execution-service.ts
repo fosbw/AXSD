@@ -1,4 +1,4 @@
-import { executeControlled, type ControlRequest, type PolicyEvaluator, type ControlDecision, type PolicyContext, type PolicyRule, type Execution } from '@axsd/core';
+import { evaluatePolicies, executeControlled, type ControlRequest, type PolicyContext, type PolicyRule, type ControlDecision, type Execution } from '@axsd/core';
 import type { CancellationToken } from './cancellation.js';
 
 export interface ExecutionServiceDeps {
@@ -9,7 +9,7 @@ export interface ExecutionServiceDeps {
   audit?: { record: (event: { type: string; request: ControlRequest; decision?: ControlDecision; status: 'accepted' | 'rejected' | 'completed' | 'failed'; error?: { code: string; message: string } }) => Promise<void> | void };
 }
 
-function controlRequest(execution: Execution, context: PolicyContext): ControlRequest {
+function controlRequest(context: PolicyContext): ControlRequest {
   return {
     actorId: context.actorId,
     sessionId: context.sessionId,
@@ -27,28 +27,26 @@ export async function runControlledExecution(
   deps: ExecutionServiceDeps,
   token: CancellationToken,
 ): Promise<Execution> {
-  const request = controlRequest(execution, context);
-  const policy: PolicyEvaluator = {
+  const request = controlRequest(context);
+  const policy = {
     evaluate: () => {
-      const decision = deps.policies
-        .filter((rule) => rule.enabled)
-        .sort((a, b) => b.priority - a.priority)[0];
-      if (!decision) {
-        return { effect: 'DENY', reason: 'No applicable policy grants this action', policyIds: [], requiresApproval: false, decidedAt: new Date().toISOString() };
-      }
-      const effect = decision.effect;
+      const result = evaluatePolicies(context, deps.policies);
       return {
-        effect,
-        reason: effect === 'DENY' ? `Denied by policy ${decision.name}` : `Decision from policy ${decision.name}`,
-        policyIds: [decision.id],
-        requiresApproval: effect === 'ASK',
-        decidedAt: new Date().toISOString(),
-      };
+        effect: result.decision,
+        reason: result.reason,
+        policyIds: result.matchedPolicyIds,
+        requiresApproval: result.decision === 'ASK',
+        decidedAt: result.evaluatedAt,
+      } satisfies ControlDecision;
     },
   };
 
   const budget = deps.budget ?? { check: () => undefined };
-  const approval = deps.approval ?? { waitForApproval: async () => { throw new Error('APPROVAL_REQUIRED: approval gate is not configured'); } };
+  const approval = deps.approval ?? {
+    waitForApproval: async () => {
+      throw new Error('APPROVAL_REQUIRED: approval gate is not configured');
+    },
+  };
   const audit = deps.audit ?? { record: async () => undefined };
 
   try {
