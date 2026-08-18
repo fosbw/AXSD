@@ -4,3 +4,4 @@ export * from './discovery.js';
 export * from './security.js';
 export * from './health.js';
 export * from './mcp.js';
+export * from './provider.js';
