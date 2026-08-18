@@ -1,0 +1,4 @@
+export type ApprovalDecision='APPROVE_ONCE'|'APPROVE_SESSION'|'DENY'|'CANCEL';
+export interface ApprovalRequest { id:string; executionId:string; actorId:string; action:string; risk:'LOW'|'MEDIUM'|'HIGH'|'CRITICAL'; argumentSummary:string; estimatedCost?:number; createdAt:string; }
+export interface ApprovalStore { put(request:ApprovalRequest):Promise<void>; decide(id:string,decision:ApprovalDecision,actorId:string):Promise<void>; get(id:string):Promise<ApprovalRequest|null>; }
+export class ApprovalService { constructor(private readonly store:ApprovalStore){} async request(input:Omit<ApprovalRequest,'id'|'createdAt'>){const r={...input,id:crypto.randomUUID(),createdAt:new Date().toISOString()};await this.store.put(r);return r;} async decide(id:string,decision:ApprovalDecision,actorId:string){if(!actorId)throw new Error('approval actor required');await this.store.decide(id,decision,actorId);return decision;} }
