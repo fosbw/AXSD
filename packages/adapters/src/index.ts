@@ -4,6 +4,8 @@ export * from './discovery.js';
 export * from './security.js';
 export * from './health.js';
 export * from './mcp.js';
+export * from './mcp-http.js';
 export * from './provider.js';
 export * from './secrets.js';
 export * from './http-json.js';
+export * from './model-http.js';
