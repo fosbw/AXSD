@@ -11,3 +11,11 @@
 - production Docker health checks and removal of unsafe default passwords
 - backup script and restore runbook
 - expanded mobile-friendly control-plane console
+- explicit resource registry and deterministic capability-aware routing
+- authenticated discovery provider registry with isolated provider failures
+- complete resource lifecycle metadata in storage with enable/disable API actions
+- hardened bootstrap token validation and restricted environment secret references
+- audit-chain verifier aligned with the persisted integrity payload
+- budget ledger invariants and remaining-budget reporting
+- hardened MCP endpoint validation, host allowlisting and request timeouts
+- API-backed Policies, Budgets and Audit views in the web console
