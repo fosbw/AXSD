@@ -1,0 +1,3 @@
+import type {PolicyRule,PermissionDecision} from './domain.js';
+const order:PermissionDecision[]=['DENY','ASK','ALLOW_ONCE','ALLOW_SESSION','ALLOW_RESOURCE','ALLOW'];
+export function resolvePolicies(rules:PolicyRule[]):{decision:PermissionDecision;matched:string[]}{const active=rules.filter(r=>r.enabled).sort((a,b)=>b.priority-a.priority);if(!active.length)return {decision:'DENY',matched:[]};const top=active[0].priority;const same=active.filter(r=>r.priority===top);if(same.some(r=>r.effect==='DENY'))return {decision:'DENY',matched:same.map(r=>r.id)};const chosen=same.sort((a,b)=>order.indexOf(a.effect)-order.indexOf(b.effect))[0];return {decision:chosen.effect,matched:same.map(r=>r.id)};}
