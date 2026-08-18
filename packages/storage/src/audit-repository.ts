@@ -1,0 +1,4 @@
+import type { Pool } from 'pg';
+import { createHash } from 'node:crypto';
+export interface AuditEventInput{eventId:string;actorId:string;action:string;executionId?:string;resourceId?:string;metadata:Record<string,unknown>;}
+export class PostgresAuditRepository{constructor(private readonly pool:Pool){}async append(e:AuditEventInput){const {rows}=await this.pool.query(`SELECT integrity_hash FROM audit_events ORDER BY sequence_id DESC LIMIT 1`);const prev=rows[0]?.integrity_hash??'';const payload=JSON.stringify({previous:prev,...e});const hash=createHash('sha256').update(payload).digest('hex');await this.pool.query(`INSERT INTO audit_events(event_id,actor_id,action,execution_id,resource_id,metadata,integrity_hash,previous_hash) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,[e.eventId,e.actorId,e.action,e.executionId??null,e.resourceId??null,e.metadata,hash,prev]);return hash;}}
