@@ -1,5 +1,4 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
+import { describe, expect, it } from 'vitest';
 import { redactSecrets } from './security.js';
 
-test('redacts secret-like keys', () => { const value = redactSecrets({ apiKey: 'secret-value', nested: { password: 'pw' } }) as Record<string, unknown>; assert.equal(value.apiKey, '[REDACTED]'); assert.deepEqual(value.nested, { password: '[REDACTED]' }); });
+describe('redaction', () => { it('redacts secret-like keys', () => { const value = redactSecrets({ apiKey: 'secret-value', nested: { password: 'pw' } }) as Record<string, unknown>; expect(value.apiKey).toBe('[REDACTED]'); expect(value.nested).toEqual({ password: '[REDACTED]' }); }); });
