@@ -16,3 +16,4 @@ export * from './risk-rules.js';
 export * from './prompt-injection.js';
 export * from './argument-validation.js';
 export * from './execution-guard.js';
+export * from './resource-registry.js';
